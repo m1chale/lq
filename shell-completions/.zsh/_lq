@@ -1,0 +1,47 @@
+#compdef lq
+
+_lq() {
+  local -a subcmds pages
+  local curcontext="$curcontext" state
+
+  subcmds=(
+    'cat:Print a site'
+    'grep:Search sites'
+    'sites:List sites'
+    'pages:List pages'
+    'journals:List journals'
+    'open:Open site in logseq app'
+    'help:Show help'
+  )
+
+  _arguments -C \
+    '1:subcommand:->sub' \
+    '2:page:->page' \
+    '*::args:->args'
+
+  case $state in
+    sub)
+      _describe -t commands 'lq command' subcmds
+      return
+      ;;
+    page)
+      if [[ $words[2] == (cat|open) ]]; then
+        pages=("${(@f)$(lq pages 2>/dev/null)}")
+        if (( $#pages )); then
+          compadd -M 'm:{a-z}={A-Z}' -a pages
+        else
+          _message 'no pages found'
+        fi
+      else
+        _message 'no more arguments'
+      fi
+      return
+      ;;
+    args)
+      _message 'no more arguments'
+      return
+      ;;
+  esac
+}
+
+_lq "$@"

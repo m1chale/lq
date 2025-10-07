@@ -1,0 +1,1 @@
+g++ -std=c++17 $(find src -name '*.cpp') -I include -o lq && mv lq ~/bin/
