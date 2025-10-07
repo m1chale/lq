@@ -2,7 +2,7 @@
 
 A simple command-line tool that brings [Logseq](https://logseq.com/) to your terminal.
 
-## 🧑‍💻 Why This Tool Exists
+## 🧑‍💻 Why this ool exists
 
 As a software developer, I often find myself jumping between terminals, code, and notes.  
 I use Logseq to keep track of ideas, shortcuts, and project notes — but reaching for the mouse or switching out of the terminal always broke my flow.
@@ -12,7 +12,7 @@ It lets me search, read, and open my notes directly from the terminal — no con
 
 ---
 
-## ✨ Features Overview
+## ✨ Features overview
 
 | Command                   | Description                               |
 | ------------------------- | ----------------------------------------- |
@@ -31,7 +31,7 @@ TODO
 
 # Installation
 
-## install `lq`
+## Install `lq`
 
 A helper script called `release.sh` is included in the project root.
 It compiles the tool and moves the binary into `~/bin/`.
@@ -40,7 +40,7 @@ It compiles the tool and moves the binary into `~/bin/`.
 
 If you prefer, you can always compile the binary manually and move it wherever you like.
 
-## install tab completion script
+## Install tab completion script
 
 To enable shell completions, copy the `_lq` completion script for your shell from
 `shell-completions/<your-shell>/` into your local completions folder:
