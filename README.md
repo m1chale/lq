@@ -42,6 +42,8 @@ If you prefer, you can always compile the binary manually and move it wherever y
 
 ## Install tab completion script
 
+> Currently there is only a config for zsh provided. It should be easy enough to adapt it to other shells.
+
 To enable shell completions, copy the `_lq` completion script for your shell from
 `shell-completions/<your-shell>/` into your local completions folder:
 
@@ -56,4 +58,19 @@ Then add the following lines to your `~/.zshrc` (if not already present):
 echo 'fpath=("$HOME/.zsh/completions" $fpath)' >> ~/.zshrc
 echo 'autoload -Uz compinit && compinit' >> ~/.zshrc
 source ~/.zshrc
+```
+
+# ⚙️ Configuration
+
+The tool uses a simple configuration file located at:
+
+```
+~/.lq
+```
+
+It should define your Logseq graph path and name like this:
+
+```bash
+LOGSEQ_PATH=/Users/example/docs/loqseq/mygraph/
+GRAPH_NAME=notes
 ```
