@@ -10,29 +10,29 @@ namespace fs = std::filesystem;
 
 int runCommandList(const fs::path &graphPath, bool listPages, bool listJournals) {
 
-    std::vector<std::string> sites;
+    std::vector<std::string> siteNames;
 
     if (listPages && listJournals) {
         auto sitesVec = lq::getAllSites(graphPath);
 
         for (auto site : sitesVec) {
-            sites.push_back(site.name);
+            siteNames.push_back(site.name);
         }
 
     } else if (listPages) {
-        sites = lq::getPages(graphPath);
+        siteNames = lq::getPages(graphPath);
     } else if (listJournals) {
-        sites = lq::getJournals(graphPath);
+        siteNames = lq::getJournals(graphPath);
     }
 
-    if (sites.empty()) {
+    if (siteNames.empty()) {
         std::cerr << "nothing found\n";
         return -1;
     }
 
-    lq::strings::sortLexicographical(sites);
+    lq::strings::sortLexicographical(siteNames);
 
-    for (const std::string &site : sites) {
+    for (const std::string &site : siteNames) {
         std::cout << site << "\n";
     }
 
