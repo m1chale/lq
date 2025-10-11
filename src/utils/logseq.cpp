@@ -1,6 +1,8 @@
 #include "logseq.hpp"
 #include "../constants/constants.hpp"
 #include <filesystem>
+#include <regex>
+#include <unordered_set>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -66,6 +68,59 @@ std::string_view getSiteDirectoryFromType(SiteType type) {
     default:
         return "";
     }
+}
+
+TodoState markerToState(const std::string &marker) {
+    if (marker == "TODO")
+        return TodoState::TODO;
+    if (marker == "DOING")
+        return TodoState::DOING;
+    if (marker == "DONE")
+        return TodoState::DONE;
+    if (marker == "LATER")
+        return TodoState::LATER;
+    if (marker == "WAITING")
+        return TodoState::WAITING;
+    if (marker == "CANCELED")
+        return TodoState::CANCELED;
+    return TodoState::UNKNOWN;
+}
+
+std::optional<TodoState> extractTodoState(const std::string &line) {
+    static const std::regex todoRegex(
+        R"(^\s*(?:[-*+]\s+(?:\[( |x|-)\]|(TODO|DOING|DONE|LATER|WAITING|CANCELED))|\*+\s+(?:TODO|DOING|DONE|LATER|WAITING|CANCELED))\b)",
+        std::regex::ECMAScript);
+
+    std::smatch m;
+    if (std::regex_search(line, m, todoRegex)) {
+        // Checkbox match?
+        if (m[1].matched) {
+            char c = m[1].str()[0];
+            switch (c) {
+            case 'x':
+            case 'X':
+                return TodoState::DONE;
+            case '-':
+                return TodoState::DOING;
+            default:
+                return TodoState::TODO;
+            }
+        }
+
+        // Explicit marker (group 2)
+        if (m[2].matched)
+            return markerToState(m[2].str());
+    }
+    return std::nullopt;
+}
+
+bool isTodoLine(const std::string &line, const std::unordered_set<TodoState> &allowedStates) {
+    auto state = extractTodoState(line);
+    if (!state)
+        return false;
+
+    bool match = allowedStates.count(*state) > 0;
+    return match;
 }
 
 } // namespace lq

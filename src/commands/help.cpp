@@ -15,6 +15,7 @@ int runCommandHelp() {
               << " <site-name>\t\t\t: for opening a page/journal in logseq app\n";
     std::cout << "\t* " << lq::term::bold << "lq set" << lq::term::reset
               << " <path-name>\t\t\t: to set the path to your logseq graph TODO\n";
+    std::cout << "\t* " << lq::term::bold << "lq todo list" << lq::term::reset << "\t\t\t\t: for listing all todos\n";
     std::cout << "\t*\n\t************************************************************************\n";
 
     return 0;

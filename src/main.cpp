@@ -6,6 +6,7 @@
 #include "commands/list.hpp"
 #include "commands/open.hpp"
 #include "commands/print.hpp"
+#include "commands/todo.hpp"
 #include "config/config.hpp"
 #include "utils/strings.hpp"
 
@@ -58,6 +59,12 @@ int main(int argc, char *argv[]) {
     case Command::GrepSites: {
 
         return runCommandGrep(config->logseqPath, argv[2]);
+        break;
+    }
+
+    case Command::Todo: {
+
+        return runCommandTodo(config->logseqPath, argc, argv);
         break;
     }
 
