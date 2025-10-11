@@ -108,27 +108,16 @@ std::optional<TodoListParameters> parseParametersSubCmdList(int argc, char *argv
 
 int runSubCommandList(const std::filesystem::path &graphPath, const TodoListParameters &parameters) {
 
-    std::vector<lq::Site> sites = lq::getAllSites(graphPath);
+    std::vector<lq::SiteWithLines> sites = lq::getAllLinesFromGraph(graphPath);
 
-    // TODO: same loop exists in grep function - move to own function
-    for (auto site : sites) {
-        fs::path pagePath = graphPath / lq::getSiteDirectoryFromType(site.type) / site.name;
-        std::ifstream file(pagePath);
+    const std::unordered_set<lq::TodoState> allowedStates = {lq::TodoState::TODO, lq::TodoState::DOING, lq::TodoState::LATER,
+                                                             lq::TodoState::WAITING};
 
-        if (!file) {
-            std::cerr << "Error: could not open " << pagePath << "\n";
-            continue;
-        }
-
-        std::string line;
-        std::unordered_set<lq::TodoState> allowedStates = {lq::TodoState::TODO, lq::TodoState::DOING, lq::TodoState::LATER,
-                                                           lq::TodoState::WAITING};
-
-        while (std::getline(file, line)) {
+    for (lq::SiteWithLines site : sites) {
+        for (std::string line : site.lines)
             if (lq::isTodoLine(line, allowedStates)) {
                 std::cout << line << "\n";
             }
-        }
     }
 
     return 0;

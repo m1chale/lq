@@ -17,9 +17,17 @@ struct Site {
     Site(std::string name, SiteType type);
 };
 
+struct SiteWithLines {
+    Site site;
+    std::vector<std::string> lines;
+
+    SiteWithLines(Site site, std::vector<std::string> lines);
+};
+
 std::vector<std::string> getPages(const fs::path &graphPath);
 std::vector<std::string> getJournals(const fs::path &graphPath);
 std::vector<Site> getAllSites(const fs::path &graphPath);
+std::vector<SiteWithLines> getAllLinesFromGraph(const fs::path &graphPath);
 std::string_view getSiteDirectoryFromType(SiteType type);
 bool isTodoLine(const std::string &line, const std::unordered_set<TodoState> &allowedStates);
 } // namespace lq

@@ -1,6 +1,8 @@
 #include "logseq.hpp"
 #include "../constants/constants.hpp"
 #include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <regex>
 #include <unordered_set>
 #include <vector>
@@ -9,7 +11,8 @@ namespace fs = std::filesystem;
 
 namespace lq {
 
-Site::Site(std::string name, SiteType type) : name{name}, type{type} {};
+Site::Site(std::string name, SiteType type) : name{std::move(name)}, type{type} {}
+SiteWithLines::SiteWithLines(Site site, std::vector<std::string> lines) : site{std::move(site)}, lines{std::move(lines)} {}
 
 std::vector<std::string> getViewableSitesFromPath(const fs::path &path);
 bool isViewableSite(const fs::directory_entry &entry);
@@ -40,6 +43,34 @@ std::vector<Site> getAllSites(const fs::path &graphPath) {
     }
 
     return sites;
+}
+
+std::vector<SiteWithLines> getAllLinesFromGraph(const fs::path &graphPath) {
+    std::vector<Site> sites = getAllSites(graphPath);
+
+    std::vector<SiteWithLines> retSites;
+    retSites.reserve(sites.size());
+
+    for (Site &site : sites) {
+        fs::path pagePath = graphPath / lq::getSiteDirectoryFromType(site.type) / site.name;
+        std::ifstream file(pagePath);
+        std::vector<std::string> lines;
+
+        if (!file) {
+            std::cerr << "Error: could not open " << pagePath << "\n";
+            continue;
+        }
+
+        std::string line;
+
+        while (std::getline(file, line)) {
+            lines.push_back(std::move(line));
+        }
+
+        retSites.emplace_back(std::move(site), std::move(lines));
+    }
+
+    return retSites;
 }
 
 std::vector<std::string> getViewableSitesFromPath(const fs::path &path) {

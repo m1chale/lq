@@ -14,31 +14,23 @@ inline std::string highlight_all_ci(const std::string &haystack, const std::stri
                                     std::string_view color_reset = "\x1b[0m");
 
 int runCommandGrep(const fs::path &graphPath, const std::string &searchString) {
-    auto sites = lq::getAllSites(graphPath);
 
-    for (auto site : sites) {
-        fs::path pagePath = graphPath / lq::getSiteDirectoryFromType(site.type) / site.name;
-        std::ifstream file(pagePath);
+    std::vector<lq::SiteWithLines> sites = lq::getAllLinesFromGraph(graphPath);
+
+    for (lq::SiteWithLines siteWithLines : sites) {
         bool printedPage = false;
 
-        if (!file) {
-            std::cerr << "Error: could not open " << pagePath << "\n";
-            continue;
-        }
-
-        std::string line;
-        while (std::getline(file, line)) {
+        for (std::string line : siteWithLines.lines) {
             if (lq::strings::caseInsensitiveSearch(line, searchString)) {
 
                 if (!printedPage) {
                     printedPage = true;
-                    std::cout << lq::term::green << site.name << lq::term::reset << "\n";
+                    std::cout << lq::term::green << siteWithLines.site.name << lq::term::reset << "\n";
                 }
 
                 std::cout << highlight_all_ci(line, searchString) << "\n";
             }
         }
-
         if (printedPage) {
             std::cout << "\n";
         }
