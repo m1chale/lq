@@ -43,3 +43,4 @@
 .vscode/
 
 private.md
+.build/
