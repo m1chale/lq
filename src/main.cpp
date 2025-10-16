@@ -57,6 +57,9 @@ int main(int argc, char *argv[]) {
         break;
     }
     case Command::GrepSites: {
+        if (argc < 3) {
+            std::cerr << "Not enough arguments provided";
+        }
 
         return runCommandGrep(config->logseqPath, argv[2]);
         break;
