@@ -4,6 +4,7 @@
 #include <optional>
 #include <regex>
 #include <string>
+#include <unordered_map>
 
 #include "../utils/logseq.hpp"
 #include "../utils/strings.hpp"
