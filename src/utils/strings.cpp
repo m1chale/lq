@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <locale>
 #include <string>
 #include <string_view>
@@ -17,6 +18,8 @@ bool caseInsensitiveSearch(const std::string &haystack, const std::string &needl
                           [](char ch1, char ch2) { return std::tolower((unsigned char)ch1) == std::tolower((unsigned char)ch2); });
     return it != haystack.end();
 };
+
+bool startsWith(const std::string &s, const char *prefix) { return s.rfind(prefix, 0) == 0; }
 
 bool endsWith(const std::string &s, const std::string &preFix) {
     if (s.size() < preFix.size())
