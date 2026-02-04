@@ -2,7 +2,7 @@
 
 A simple command-line tool that brings [Logseq](https://logseq.com/) to your terminal.
 
-## 🧑‍💻 Why this ool exists
+## 🧑‍💻 Why this tool exists
 
 As a software developer, I often find myself jumping between terminals, code, and notes.  
 I use Logseq to keep track of ideas, shortcuts, and project notes — but reaching for the mouse or switching out of the terminal always broke my flow.
