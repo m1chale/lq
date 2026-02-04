@@ -41,11 +41,11 @@ std::optional<Configuration> loadConfig() {
     while (std::getline(file, line)) {
         auto parts = lq::strings::splitFirstOf(line, configDelimiter);
 
-        if (parts.size() < 2)
+        if (parts.second.empty())
             continue;
 
-        auto key = lq::strings::trim(parts[0]);
-        auto value = lq::strings::trim(parts[1]);
+        auto key = lq::strings::trim(parts.first);
+        auto value = lq::strings::trim(parts.second);
 
         if (std::string_view(key) == configLogseqPath) {
             logseqPath = std::move(value);
