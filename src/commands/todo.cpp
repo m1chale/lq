@@ -6,8 +6,10 @@
 #include <string>
 
 #include "../utils/logseq.hpp"
+#include "../utils/strings.hpp"
 #include "../utils/terminal.hpp"
 #include "help.hpp"
+#include <map>
 #include <unordered_set>
 
 enum class TodoSubCommand { Add, List, SetDone, Unknown };
@@ -24,9 +26,13 @@ struct TodoListParameters {
 const std::unordered_map<std::string, TodoParametersForShowCmd> showSubCmdParameters = {{"-t", TodoParametersForShowCmd::Tag}};
 
 TodoSubCommand parseSubCommand(const std::string &cmd);
-
 std::optional<TodoListParameters> parseParametersSubCmdList(int argc, char *argv[]);
 int runSubCommandList(const std::filesystem::path &graphPath, const TodoListParameters &parameters);
+std::map<lq::TodoState, std::vector<std::string>> collectTodoLinesByState(const std::vector<lq::SiteWithLines> &sites,
+                                                                          const std::unordered_set<lq::TodoState> &allowedStates);
+
+void printTodoHeader(lq::TodoState todoState);
+void removeTodoStateFromLine(std::string &line);
 
 int runCommandTodo(const std::filesystem::path &graphPath, int argc, char *argv[]) {
 
@@ -107,18 +113,53 @@ std::optional<TodoListParameters> parseParametersSubCmdList(int argc, char *argv
 }
 
 int runSubCommandList(const std::filesystem::path &graphPath, const TodoListParameters &parameters) {
-
     std::vector<lq::SiteWithLines> sites = lq::getAllLinesFromGraph(graphPath);
 
     const std::unordered_set<lq::TodoState> allowedStates = {lq::TodoState::TODO, lq::TodoState::DOING, lq::TodoState::LATER,
                                                              lq::TodoState::WAITING};
 
+    std::map<lq::TodoState, std::vector<std::string>> todos = collectTodoLinesByState(sites, allowedStates);
+
+    for (std::__1::pair<const lq::TodoState, std::__1::vector<std::__1::string>> todo : todos) {
+        printTodoHeader(todo.first);
+
+        for (std::string line : todo.second) {
+            removeTodoStateFromLine(line);
+            std::cout << line << "\n";
+        }
+
+        std::cout << std::endl;
+    }
+    return 0;
+}
+
+std::map<lq::TodoState, std::vector<std::string>> collectTodoLinesByState(const std::vector<lq::SiteWithLines> &sites,
+                                                                          const std::unordered_set<lq::TodoState> &allowedStates) {
+    std::map<lq::TodoState, std::vector<std::string>> todos;
+
     for (lq::SiteWithLines site : sites) {
-        for (std::string line : site.lines)
-            if (lq::isTodoLine(line, allowedStates)) {
-                std::cout << line << "\n";
+        for (std::string line : site.lines) {
+            auto state = lq::getTodoStateFromLine(line, allowedStates);
+            if (state) {
+                todos[*state].push_back(lq::strings::trim(line));
             }
+        }
     }
 
-    return 0;
+    return todos;
+}
+
+void printTodoHeader(lq::TodoState todoState) {
+    std::cout << lq::term::bold << lq::term::blue << "[" << lq::to_string(todoState) << "]" << lq::term::reset << "\n";
+}
+
+void removeTodoStateFromLine(std::string &line) {
+    constexpr std::string_view delimiter = " ";
+    auto parts = lq::strings::split(line, delimiter);
+
+    parts.erase(std::remove_if(parts.begin(), parts.end(),
+                               [](const std::string &tok) { return lq::markerToTodoState(tok) != lq::TodoState::UNKNOWN; }),
+                parts.end());
+
+    line = lq::strings::join(parts, delimiter);
 }

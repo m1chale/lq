@@ -29,16 +29,56 @@ bool endsWith(const std::string &s, const std::string &preFix) {
     return true;
 }
 
-std::vector<std::string> splitFirstOf(const std::string &input, std::string_view delimiter) {
+std::pair<std::string, std::string> splitFirstOf(const std::string &input, std::string_view delimiter) {
     auto position = input.find(delimiter);
 
     if (position == std::string::npos)
-        return {input};
+        return {input, ""};
 
     std::string first = input.substr(0, position);
     std::string second = input.substr(position + delimiter.size());
 
     return {first, second};
+}
+
+std::vector<std::string> split(std::string input, std::string_view delimiter) {
+    std::vector<std::string> result;
+
+    while (true) {
+        size_t nextDelimiterPos = input.find(delimiter);
+
+        if (nextDelimiterPos == std::string::npos) {
+            result.push_back(input);
+            break;
+        }
+
+        result.push_back(input.substr(0, nextDelimiterPos));
+        input = input.substr(nextDelimiterPos + 1);
+    }
+
+    return result;
+}
+
+std::string join(const std::vector<std::string> &input, std::string_view delimiter) {
+    if (input.empty())
+        return {};
+
+    std::string result;
+
+    // calculate capacity to reduce reallocations
+    size_t total = (input.size() - 1) * delimiter.size();
+    for (const auto &s : input)
+        total += s.size();
+    result.reserve(total);
+
+    for (size_t i = 0; i < input.size(); i++) {
+        result += input[i];
+
+        if (i + 1 < input.size())
+            result += delimiter;
+    }
+
+    return result;
 }
 
 std::string trim(std::string s) {

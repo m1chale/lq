@@ -101,7 +101,7 @@ std::string_view getSiteDirectoryFromType(SiteType type) {
     }
 }
 
-TodoState markerToState(const std::string &marker) {
+TodoState markerToTodoState(const std::string &marker) {
     if (marker == "TODO")
         return TodoState::TODO;
     if (marker == "DOING")
@@ -118,9 +118,12 @@ TodoState markerToState(const std::string &marker) {
 }
 
 std::optional<TodoState> extractTodoState(const std::string &line) {
+    // Matches (optionally) a list bullet, then (optionally) a Markdown heading '#'
+    // then either a checkbox [ ], [x], [-] OR one of the TODO words.
+    // Also handles bare org-style "* TODO ..." headings.
     static const std::regex todoRegex(
-        R"(^\s*(?:[-*+]\s+(?:\[( |x|-)\]|(TODO|DOING|DONE|LATER|WAITING|CANCELED))|\*+\s+(?:TODO|DOING|DONE|LATER|WAITING|CANCELED))\b)",
-        std::regex::ECMAScript);
+        R"(^(?:\s*(?:[-*+]\s*)?(?:#{1,6}\s*)?|\s*\*+\s+)\s*(?:\[( |x|X|-)\]|(TODO|DOING|DONE|LATER|WAITING|CANCELED))\b)",
+        std::regex::ECMAScript | std::regex::icase);
 
     std::smatch m;
     if (std::regex_search(line, m, todoRegex)) {
@@ -134,24 +137,26 @@ std::optional<TodoState> extractTodoState(const std::string &line) {
             case '-':
                 return TodoState::DOING;
             default:
-                return TodoState::TODO;
+                return TodoState::TODO; // space => unchecked
             }
         }
-
         // Explicit marker (group 2)
         if (m[2].matched)
-            return markerToState(m[2].str());
+            return markerToTodoState(m[2].str());
     }
     return std::nullopt;
 }
 
-bool isTodoLine(const std::string &line, const std::unordered_set<TodoState> &allowedStates) {
+std::optional<TodoState> getTodoStateFromLine(const std::string &line, const std::unordered_set<TodoState> &allowedStates) {
     auto state = extractTodoState(line);
     if (!state)
-        return false;
+        return std::nullopt;
 
-    bool match = allowedStates.count(*state) > 0;
-    return match;
+    if (allowedStates.count(*state) > 0) {
+        return state;
+    }
+
+    return std::nullopt;
 }
 
 } // namespace lq
