@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "cli/arg_parser.hpp"
 #include "commands/commander.hpp"
 #include "commands/grep.hpp"
 #include "commands/help.hpp"
@@ -14,18 +15,25 @@ int main(int argc, char *argv[]) {
 
     if (argc < 2) {
         runCommandHelp();
-        return 0;
+        return EXIT_SUCCESS;
     }
 
     auto config = lq::config::loadConfig();
 
     if (!config) {
-        return -1;
+        return EXIT_FAILURE;
     }
 
     std::string cmdArgument = argv[1];
 
     Command cmd = parseCommand(cmdArgument);
+    ArgParseResult parsedArguments = parseArgs(argc, argv, 2);
+
+    if (!parsedArguments.errors.empty()) {
+        for (auto &e : parsedArguments.errors)
+            std::cerr << e << "\n";
+        return EXIT_FAILURE;
+    }
 
     switch (cmd) {
     case Command::ListPages: {
@@ -43,6 +51,7 @@ int main(int argc, char *argv[]) {
     case Command::openSite: {
         if (argc < 3) {
             std::cerr << "Not enough arguments provided";
+            return EXIT_FAILURE;
         }
 
         return runCommandOpen(config->graphName, argv[2]);
@@ -51,17 +60,19 @@ int main(int argc, char *argv[]) {
     case Command::PrintSite: {
         if (argc < 3) {
             std::cerr << "Not enough arguments provided";
+            return EXIT_FAILURE;
         }
 
         return runCommandPrint(config->logseqPath, argv[2]);
         break;
     }
     case Command::GrepSites: {
-        if (argc < 3) {
-            std::cerr << "Not enough arguments provided";
+        auto opts = parseGrepOptions(parsedArguments);
+        if (!opts) {
+            std::cerr << opts.error() << "\n";
+            return EXIT_FAILURE;
         }
-
-        return runCommandGrep(config->logseqPath, argv[2]);
+        return runCommandGrep(config->logseqPath, *opts);
         break;
     }
 
@@ -80,9 +91,9 @@ int main(int argc, char *argv[]) {
     }
     case Command::Unknown: {
         std::cerr << "command not found";
-        return -1;
+        return EXIT_FAILURE;
     }
     }
 
-    return 0;
+    return EXIT_FAILURE;
 }
