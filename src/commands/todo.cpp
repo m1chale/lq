@@ -2,6 +2,8 @@
 #include <fstream>
 #include <iostream>
 #include <optional>
+#include <regex>
+#include <set>
 #include <string>
 #include <unordered_map>
 
@@ -34,6 +36,9 @@ std::map<lq::TodoState, std::vector<std::string>> collectTodoLinesByState(const 
 
 void printTodoHeader(lq::TodoState todoState);
 void removeTodoStateFromLine(std::string &line);
+std::set<std::string> extractTagsFromLine(const std::string &line);
+std::set<std::string> normalizeTags(const std::vector<std::string> &tags);
+bool hasAnyMatchingTag(const std::set<std::string> &lineTags, const std::set<std::string> &filterTags);
 
 int runCommandTodo(const std::filesystem::path &graphPath, int argc, char *argv[]) {
 
@@ -118,15 +123,41 @@ int runSubCommandList(const std::filesystem::path &graphPath, const TodoListPara
 
     const std::unordered_set<lq::TodoState> allowedStates = {lq::TodoState::TODO, lq::TodoState::DOING, lq::TodoState::LATER,
                                                              lq::TodoState::WAITING};
+    const std::set<std::string> filterTags = normalizeTags(parameters.tags);
 
     std::map<lq::TodoState, std::vector<std::string>> todos = collectTodoLinesByState(sites, allowedStates);
 
     for (std::__1::pair<const lq::TodoState, std::__1::vector<std::__1::string>> todo : todos) {
-        printTodoHeader(todo.first);
+        std::map<std::string, std::vector<std::string>> groupedTodos;
 
         for (std::string line : todo.second) {
             removeTodoStateFromLine(line);
-            std::cout << "\t" << MarkdownFormatter::colorizeTagsInLine(line) << "\n";
+
+            std::set<std::string> lineTags = extractTagsFromLine(line);
+
+            if (!filterTags.empty() && !hasAnyMatchingTag(lineTags, filterTags))
+                continue;
+
+            if (lineTags.empty()) {
+                groupedTodos["#untagged"].push_back(line);
+            } else {
+                // Keep a todo line in each of its tags so grouped browsing stays useful.
+                for (const std::string &tag : lineTags)
+                    groupedTodos[tag].push_back(line);
+            }
+        }
+
+        if (groupedTodos.empty())
+            continue;
+
+        printTodoHeader(todo.first);
+
+        for (const auto &[tag, lines] : groupedTodos) {
+            std::cout << "  " << lq::term::bold_on << lq::term::yellow << tag << lq::term::resetHard << "\n";
+
+            for (const std::string &line : lines) {
+                std::cout << "\t" << MarkdownFormatter::colorizeTagsInLine(line) << "\n";
+            }
         }
 
         std::cout << std::endl;
@@ -163,4 +194,43 @@ void removeTodoStateFromLine(std::string &line) {
                 parts.end());
 
     line = lq::strings::join(parts, delimiter);
+}
+
+std::set<std::string> extractTagsFromLine(const std::string &line) {
+    static const std::regex tagPattern(R"((^|[^A-Za-z0-9_])(#[A-Za-z0-9_-]+))");
+
+    std::set<std::string> tags;
+    auto begin = std::sregex_iterator(line.begin(), line.end(), tagPattern);
+    auto end = std::sregex_iterator();
+
+    for (auto it = begin; it != end; ++it) {
+        tags.insert((*it).str(2));
+    }
+
+    return tags;
+}
+
+std::set<std::string> normalizeTags(const std::vector<std::string> &tags) {
+    std::set<std::string> normalized;
+
+    for (const std::string &tag : tags) {
+        if (tag.empty())
+            continue;
+
+        if (tag.front() == '#')
+            normalized.insert(tag);
+        else
+            normalized.insert("#" + tag);
+    }
+
+    return normalized;
+}
+
+bool hasAnyMatchingTag(const std::set<std::string> &lineTags, const std::set<std::string> &filterTags) {
+    for (const std::string &tag : lineTags) {
+        if (filterTags.contains(tag))
+            return true;
+    }
+
+    return false;
 }
