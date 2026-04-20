@@ -126,7 +126,7 @@ int runSubCommandList(const std::filesystem::path &graphPath, const TodoListPara
 
         for (std::string line : todo.second) {
             removeTodoStateFromLine(line);
-            std::cout << line << "\n";
+            std::cout << "\t" << line << "\n";
         }
 
         std::cout << std::endl;
