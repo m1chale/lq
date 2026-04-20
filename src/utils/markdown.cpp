@@ -2,6 +2,7 @@
 #include "strings.hpp"
 #include "terminal.hpp"
 
+#include <regex>
 #include <string_view>
 
 static bool parseHeading(std::string_view line, std::size_t &prefixLen, std::string_view &title) {
@@ -123,4 +124,36 @@ void MarkdownFormatter::formatLine(std::string &line) {
         out += lq::term::bold_off;
 
     line = std::move(out);
+}
+
+std::string MarkdownFormatter::colorizeTagsInLine(const std::string &line) {
+    // Match tags like "#personal" or "#family" with either start-of-line
+    // or a non-word delimiter before '#'.
+    static const std::regex tagPattern(R"((^|[^A-Za-z0-9_])(#[A-Za-z0-9_-]+))");
+
+    std::string out;
+    out.reserve(line.size());
+
+    std::size_t last = 0;
+    auto begin = std::sregex_iterator(line.begin(), line.end(), tagPattern);
+    auto end = std::sregex_iterator();
+
+    for (auto it = begin; it != end; ++it) {
+        const auto &match = *it;
+
+        const std::size_t matchPos = static_cast<std::size_t>(match.position(0));
+        const std::size_t prefixLen = static_cast<std::size_t>(match.length(1));
+        const std::size_t tagPos = matchPos + prefixLen;
+        const std::size_t tagLen = static_cast<std::size_t>(match.length(2));
+
+        out.append(line, last, tagPos - last);
+        out += lq::term::yellow;
+        out += match.str(2);
+        out += lq::term::fg_reset;
+
+        last = tagPos + tagLen;
+    }
+
+    out.append(line, last, std::string::npos);
+    return out;
 }

@@ -2,11 +2,11 @@
 #include <fstream>
 #include <iostream>
 #include <optional>
-#include <regex>
 #include <string>
 #include <unordered_map>
 
 #include "../utils/logseq.hpp"
+#include "../utils/markdown.hpp"
 #include "../utils/strings.hpp"
 #include "../utils/terminal.hpp"
 #include "help.hpp"
@@ -126,7 +126,7 @@ int runSubCommandList(const std::filesystem::path &graphPath, const TodoListPara
 
         for (std::string line : todo.second) {
             removeTodoStateFromLine(line);
-            std::cout << "\t" << line << "\n";
+            std::cout << "\t" << MarkdownFormatter::colorizeTagsInLine(line) << "\n";
         }
 
         std::cout << std::endl;
