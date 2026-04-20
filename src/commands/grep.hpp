@@ -1,3 +1,4 @@
+#pragma once
 #include "../cli/arg_parser.hpp"
 #include <expected>
 #include <filesystem>
