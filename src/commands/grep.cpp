@@ -9,6 +9,7 @@
 #include "../cli/arg_parser.hpp"
 #include "../constants/constants.hpp"
 #include "../utils/logseq.hpp"
+#include "../utils/markdown.hpp"
 #include "../utils/strings.hpp"
 #include "../utils/terminal.hpp"
 
@@ -36,8 +37,8 @@ std::expected<GrepOptions, std::string> parseGrepOptions(const ArgParseResult &a
     return o;
 }
 
-inline std::string highlight_all_ci(const std::string &haystack, const std::string &needle, std::string_view color_start = "\x1b[33m",
-                                    std::string_view color_reset = "\x1b[0m");
+inline std::string highlight_all_ci(const std::string &haystack, const std::string &needle, std::string_view color_start = lq::term::yellow,
+                                    std::string_view color_reset = lq::term::fg_reset);
 
 // counts leading spaces and tabs
 static size_t calculateIndentationWidth(const std::string &s) {
@@ -81,12 +82,12 @@ static std::string_view dedentView(const std::string &s, size_t widthToRemove) {
 int runCommandGrep(const std::string &graphPath, const GrepOptions &opts) {
     std::vector<lq::SiteWithLines> sites = lq::getAllLinesFromGraph(graphPath);
 
-    for (const lq::SiteWithLines &siteWithLines : sites) {
+    for (lq::SiteWithLines &siteWithLines : sites) {
         bool printedPage = false;
 
-        const auto &lines = siteWithLines.lines;
+        auto &lines = siteWithLines.lines;
         for (size_t i = 0; i < lines.size(); ++i) {
-            const std::string &line = lines[i];
+            std::string &line = lines[i];
 
             if (!lq::strings::caseInsensitiveSearch(line, opts.query)) {
                 continue;
@@ -94,8 +95,10 @@ int runCommandGrep(const std::string &graphPath, const GrepOptions &opts) {
 
             if (!printedPage) {
                 printedPage = true;
-                std::cout << lq::term::green << siteWithLines.site.name << lq::term::reset << "\n";
+                std::cout << lq::term::green << siteWithLines.site.name << lq::term::fg_reset << "\n";
             }
+
+            MarkdownFormatter::formatLine(line);
 
             const size_t baseIndent = calculateIndentationWidth(line);
 
@@ -108,7 +111,9 @@ int runCommandGrep(const std::string &graphPath, const GrepOptions &opts) {
 
                 size_t j = i + 1;
                 while (j < lines.size()) {
-                    const std::string &next = lines[j];
+                    std::string &next = lines[j];
+
+                    MarkdownFormatter::formatLine(next);
 
                     // blank lines: decide whether they belong to subtree
                     // In markdown files, blank lines usually still "belong"; we keep them if indent > baseIndent OR line empty

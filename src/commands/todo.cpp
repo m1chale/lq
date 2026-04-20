@@ -151,7 +151,7 @@ std::map<lq::TodoState, std::vector<std::string>> collectTodoLinesByState(const 
 }
 
 void printTodoHeader(lq::TodoState todoState) {
-    std::cout << lq::term::bold << lq::term::blue << "[" << lq::to_string(todoState) << "]" << lq::term::reset << "\n";
+    std::cout << lq::term::bold_on << lq::term::blue << "[" << lq::to_string(todoState) << "]" << lq::term::resetHard << "\n";
 }
 
 void removeTodoStateFromLine(std::string &line) {
