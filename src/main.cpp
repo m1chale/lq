@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #include "cli/arg_parser.hpp"
 #include "commands/commander.hpp"
@@ -26,8 +27,10 @@ int main(int argc, char *argv[]) {
 
     std::string cmdArgument = argv[1];
 
+    constexpr int kFirstCommandArgIndex = 2;
     Command cmd = parseCommand(cmdArgument);
-    ArgParseResult parsedArguments = parseArgs(argc, argv, 2);
+    ArgParseResult parsedArguments = parseArgs(argc, argv, kFirstCommandArgIndex);
+    std::vector<std::string> commandArguments(argv + kFirstCommandArgIndex, argv + argc);
 
     if (!parsedArguments.errors.empty()) {
         for (auto &e : parsedArguments.errors)
@@ -78,7 +81,13 @@ int main(int argc, char *argv[]) {
 
     case Command::Todo: {
 
-        return runCommandTodo(config->logseqPath, argc, argv);
+        return runCommandTodo(config->logseqPath, commandArguments);
+        break;
+    }
+
+    case Command::ListTodos: {
+
+        return runCommandListTodos(config->logseqPath, commandArguments);
         break;
     }
 

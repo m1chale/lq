@@ -13,6 +13,7 @@ int runCommandHelp() {
     std::cout << "\t* " << lq::term::make_bold("lq open") << " <site-name>\t\t\t: for opening a page/journal in logseq app\n";
     std::cout << "\t* " << lq::term::make_bold("lq set") << " <path-name>\t\t\t: to set the path to your logseq graph TODO\n";
     std::cout << "\t* " << lq::term::make_bold("lq todo list") << "\t\t\t\t: for listing all todos\n";
+    std::cout << "\t* " << lq::term::make_bold("lq todos") << "\t\t\t\t: shortcut for listing all todos\n";
     std::cout << "\t*\n\t************************************************************************\n";
 
     return 0;

@@ -1,19 +1,21 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <optional>
 #include <regex>
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "../utils/logseq.hpp"
 #include "../utils/markdown.hpp"
 #include "../utils/strings.hpp"
 #include "../utils/terminal.hpp"
 #include "help.hpp"
-#include <map>
-#include <unordered_set>
+#include "todo.hpp"
 
 enum class TodoSubCommand { Add, List, SetDone, Unknown };
 
@@ -29,7 +31,7 @@ struct TodoListParameters {
 const std::unordered_map<std::string, TodoParametersForShowCmd> showSubCmdParameters = {{"-t", TodoParametersForShowCmd::Tag}};
 
 TodoSubCommand parseSubCommand(const std::string &cmd);
-std::optional<TodoListParameters> parseParametersSubCmdList(int argc, char *argv[]);
+std::optional<TodoListParameters> parseParametersSubCmdList(const std::vector<std::string> &args);
 int runSubCommandList(const std::filesystem::path &graphPath, const TodoListParameters &parameters);
 std::map<lq::TodoState, std::vector<std::string>> collectTodoLinesByState(const std::vector<lq::SiteWithLines> &sites,
                                                                           const std::unordered_set<lq::TodoState> &allowedStates);
@@ -40,14 +42,14 @@ std::set<std::string> extractTagsFromLine(const std::string &line);
 std::set<std::string> normalizeTags(const std::vector<std::string> &tags);
 bool hasAnyMatchingTag(const std::set<std::string> &lineTags, const std::set<std::string> &filterTags);
 
-int runCommandTodo(const std::filesystem::path &graphPath, int argc, char *argv[]) {
+int runCommandTodo(const std::filesystem::path &graphPath, const std::vector<std::string> &args) {
 
-    if (argc < 3) {
+    if (args.empty()) {
         runCommandHelp();
         return 0;
     }
 
-    std::string rawCmd = argv[2];
+    std::string rawCmd = args[0];
 
     TodoSubCommand cmd = parseSubCommand(rawCmd);
 
@@ -56,12 +58,8 @@ int runCommandTodo(const std::filesystem::path &graphPath, int argc, char *argv[
         break;
     }
     case TodoSubCommand::List: {
-        auto paras = parseParametersSubCmdList(argc, argv);
-
-        if (!paras)
-            return -1;
-
-        return runSubCommandList(graphPath, *paras);
+        const std::vector<std::string> listArgs(args.begin() + 1, args.end());
+        return runCommandListTodos(graphPath, listArgs);
     }
     case TodoSubCommand::SetDone: {
         break;
@@ -75,6 +73,15 @@ int runCommandTodo(const std::filesystem::path &graphPath, int argc, char *argv[
     return 0;
 }
 
+int runCommandListTodos(const std::filesystem::path &graphPath, const std::vector<std::string> &args) {
+    auto paras = parseParametersSubCmdList(args);
+
+    if (!paras)
+        return -1;
+
+    return runSubCommandList(graphPath, *paras);
+}
+
 TodoSubCommand parseSubCommand(const std::string &cmd) {
     auto it = todoSubCommandMap.find(cmd);
 
@@ -85,30 +92,27 @@ TodoSubCommand parseSubCommand(const std::string &cmd) {
     return it->second;
 }
 
-std::optional<TodoListParameters> parseParametersSubCmdList(int argc, char *argv[]) {
+std::optional<TodoListParameters> parseParametersSubCmdList(const std::vector<std::string> &args) {
 
     TodoListParameters parameters;
 
-    if (argc < 4)
-        return parameters;
-
-    for (int i = 3; i < argc; i++) {
-        auto it = showSubCmdParameters.find(argv[i]);
+    for (size_t i = 0; i < args.size(); i++) {
+        auto it = showSubCmdParameters.find(args[i]);
 
         if (it == showSubCmdParameters.end()) {
-            std::cerr << "parameter not found: " << argv[i] << "\n";
+            std::cerr << "parameter not found: " << args[i] << "\n";
             return std::nullopt;
         }
 
         switch (it->second) {
         case TodoParametersForShowCmd::Tag: {
 
-            if (i + 1 >= argc) {
-                std::cerr << "no value provided for parameter: " << argv[i] << "\n";
+            if (i + 1 >= args.size()) {
+                std::cerr << "no value provided for parameter: " << args[i] << "\n";
                 return std::nullopt;
             }
 
-            parameters.tags.push_back(argv[i + 1]);
+            parameters.tags.push_back(args[i + 1]);
             i++;
             break;
         }
@@ -127,7 +131,7 @@ int runSubCommandList(const std::filesystem::path &graphPath, const TodoListPara
 
     std::map<lq::TodoState, std::vector<std::string>> todos = collectTodoLinesByState(sites, allowedStates);
 
-    for (std::__1::pair<const lq::TodoState, std::__1::vector<std::__1::string>> todo : todos) {
+    for (const auto &todo : todos) {
         std::map<std::string, std::vector<std::string>> groupedTodos;
 
         for (std::string line : todo.second) {
